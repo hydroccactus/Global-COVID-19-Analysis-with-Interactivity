@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 # Ensure correct paths and provide feedback if files are missing
-DATA_DIR = os.path.join(os.getcwd(), "data")  # Adjust as needed for your file structure
+DATA_DIR = os.getcwd()  
 
 # Button to clear cache
 if st.sidebar.button("Clear Cache"):
