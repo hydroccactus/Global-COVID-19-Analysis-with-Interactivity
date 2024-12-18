@@ -14,10 +14,10 @@ if st.sidebar.button("Clear Cache"):
 # Load datasets
 @st.cache_data
 def load_data():
-    country_data = pd.read_csv(r"D:\Kuliah-Code\Visdat\Tubes\covid_data\country_wise_latest.csv")
-    time_series_data = pd.read_csv(r"D:\Kuliah-Code\Visdat\Tubes\covid_data\covid_19_clean_complete.csv")
-    daywise_data = pd.read_csv(r"D:\Kuliah-Code\Visdat\Tubes\covid_data\day_wise.csv")
-    usa_data = pd.read_csv(r"D:\Kuliah-Code\Visdat\Tubes\covid_data\usa_county_wise.csv")  # Fix: Include USA data
+    country_data = pd.read_csv(r"\country_wise_latest.csv")
+    time_series_data = pd.read_csv(r"\covid_19_clean_complete.csv")
+    daywise_data = pd.read_csv(r"\day_wise.csv")
+    usa_data = pd.read_csv(r"\usa_county_wise.csv")  
     return country_data, time_series_data, daywise_data, usa_data
 
 # Load data
@@ -40,7 +40,7 @@ if page == "Project Overview":
     st.write("""
     **Team Members:**
     - Muhammad Ridho Sunation - 1301213038
-    - Radithya Fatih Danadyaksa -1301213332
+    - Radithya Fatih Danadyaksa - 1301213332
     - Bayu Seno Nugroho  - 1301213270
     """)
     st.write("**Tools Used**: Streamlit, Pandas, Plotly")
