@@ -1,8 +1,11 @@
-# Clear Streamlit cache
+import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+
+# Ensure correct paths and provide feedback if files are missing
+DATA_DIR = os.path.join(os.getcwd(), "data")  # Adjust as needed for your file structure
 
 # Button to clear cache
 if st.sidebar.button("Clear Cache"):
@@ -14,10 +17,17 @@ if st.sidebar.button("Clear Cache"):
 # Load datasets
 @st.cache_data
 def load_data():
-    country_data = pd.read_csv(r"\country_wise_latest.csv")
-    time_series_data = pd.read_csv(r"\covid_19_clean_complete.csv")
-    daywise_data = pd.read_csv(r"\day_wise.csv")
-    usa_data = pd.read_csv(r"\usa_county_wise.csv")  
+    try:
+        country_data = pd.read_csv(os.path.join(DATA_DIR, "country_wise_latest.csv"))
+        time_series_data = pd.read_csv(os.path.join(DATA_DIR, "covid_19_clean_complete.csv"))
+        daywise_data = pd.read_csv(os.path.join(DATA_DIR, "day_wise.csv"))
+        usa_data = pd.read_csv(os.path.join(DATA_DIR, "usa_county_wise.csv"))
+    except FileNotFoundError as e:
+        st.error(f"File not found: {e.filename}")
+        st.stop()
+    except Exception as e:
+        st.error(f"An error occurred while loading data: {e}")
+        st.stop()
     return country_data, time_series_data, daywise_data, usa_data
 
 # Load data
@@ -49,13 +59,13 @@ if page == "Project Overview":
     st.write("### Download Datasets:")
     for name, df in zip(["Country Data", "Time-Series Data", "Daywise Data", "USA Data"],
                         [country_data, time_series_data, daywise_data, usa_data]):
-        st.download_button(f"Download {name}", data=df.to_csv().encode('utf-8'), file_name=f"{name.lower().replace(' ', '_')}.csv")
+        st.download_button(f"Download {name}", data=df.to_csv(index=False).encode('utf-8'), file_name=f"{name.lower().replace(' ', '_')}.csv")
 
 # New Cases vs Total Cases
 elif page == "New Cases vs Total Cases":
     st.header("New Cases vs Total Cases")
     st.write("Visualizing the relationship between daily new cases and total confirmed cases globally.")
-    
+
     country_data['New Cases'] = country_data['Confirmed'] - country_data['Deaths'] - country_data['Recovered']
     fig = px.scatter(country_data, x="Confirmed", y="New Cases", 
                      size="New Cases", color="Country/Region", 
@@ -66,7 +76,7 @@ elif page == "New Cases vs Total Cases":
 elif page == "Deaths vs Recoveries":
     st.header("Deaths vs Recoveries")
     st.write("Analyzing the global death and recovery percentages.")
-    
+
     total_deaths = daywise_data['Deaths'].iloc[-1]
     total_recovered = daywise_data['Recovered'].iloc[-1]
     fig = px.pie(names=["Deaths", "Recovered"], values=[total_deaths, total_recovered],
@@ -77,7 +87,7 @@ elif page == "Deaths vs Recoveries":
 elif page == "Fastest Growing Countries":
     st.header("Top 10 Countries with Fastest Growth Rates")
     st.write("Countries with the highest percentage increase in confirmed cases.")
-    
+
     country_data['Growth Rate (%)'] = (country_data['Confirmed'] / country_data['Confirmed'].mean()) * 100
     fastest_growing = country_data.nlargest(10, 'Growth Rate (%)')
     fig = px.bar(fastest_growing, x="Country/Region", y="Growth Rate (%)", color="Growth Rate (%)",
@@ -104,7 +114,7 @@ elif page == "Worst Affected Countries":
 elif page == "Top Recovery Rate Countries":
     st.header("Top 10 Countries by Recovery Rate")
     st.write("Highlighting countries with the highest recovery rates globally.")
-    
+
     country_data['Recovery Rate (%)'] = (country_data['Recovered'] / country_data['Confirmed']) * 100
     top_recovery = country_data.nlargest(10, 'Recovery Rate (%)')
     fig = px.bar(top_recovery, x="Country/Region", y="Recovery Rate (%)", color="Recovery Rate (%)",
@@ -115,10 +125,10 @@ elif page == "Top Recovery Rate Countries":
 elif page == "Region-wise Analysis":
     st.header("Region-wise COVID-19 Analysis")
     st.write("Select a continent or region to analyze COVID-19 metrics.")
-    
+
     region = st.selectbox("Select Region:", country_data['WHO Region'].unique())
     filtered_region = country_data[country_data['WHO Region'] == region]
-    
+
     col1, col2 = st.columns(2)
     with col1:
         fig_cases = px.bar(filtered_region, x="Country/Region", y="Confirmed", color="Confirmed", title=f"Confirmed Cases in {region}")
@@ -131,10 +141,10 @@ elif page == "Region-wise Analysis":
 elif page == "Daily Trends Analysis":
     st.header("Daily Trends of COVID-19 Cases")
     st.write("Select a country to analyze daily trends of confirmed, deaths, and recovered cases.")
-    
+
     selected_country = st.selectbox("Select Country:", time_series_data['Country/Region'].unique())
     country_daily = time_series_data[time_series_data['Country/Region'] == selected_country]
-    
+
     fig_trend = px.line(country_daily, x="Date", y=["Confirmed", "Deaths", "Recovered"],
                         title=f"Daily COVID-19 Trends in {selected_country}", labels={"value": "Cases", "variable": "Category"})
     st.plotly_chart(fig_trend)
@@ -143,7 +153,7 @@ elif page == "Daily Trends Analysis":
 elif page == "Active Cases Over Time":
     st.header("Active Cases Over Time")
     st.write("Tracking global active cases over time.")
-    
+
     daywise_data['Active'] = daywise_data['Confirmed'] - daywise_data['Deaths'] - daywise_data['Recovered']
     fig = px.line(daywise_data, x="Date", y="Active", title="Global Active COVID-19 Cases Over Time")
     st.plotly_chart(fig)
@@ -152,7 +162,7 @@ elif page == "Active Cases Over Time":
 elif page == "Interactive Map":
     st.header("Interactive COVID-19 Map")
     st.write("Explore global COVID-19 data on an interactive map.")
-    
+
     country_data_map = country_data.copy()
     fig = px.choropleth(country_data_map, locations="Country/Region", locationmode="country names",
                         color="Confirmed", hover_name="Country/Region",
